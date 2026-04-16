@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paper_downloader"
+version = "0.1.0"
+description = "CLI and Python helpers for downloading papers from arXiv and Sci-Hub."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "PyPDF2",
+  "arxiv",
+  "beautifulsoup4",
+  "pdfminer.six",
+  "requests",
+  "retrying",
+  "urllib3",
+]
+
+[project.scripts]
+paper-downloader = "paper_downloader.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["paper_downloader*"]

@@ -1,0 +1,14 @@
+name: paper_downloader
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - PyPDF2
+      - arxiv
+      - beautifulsoup4
+      - pdfminer.six
+      - requests
+      - retrying
+      - urllib3
