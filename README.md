@@ -4,7 +4,7 @@
 
 The code is split by responsibility:
 
-- `paper_downloader/utils/` contains PDF title extraction helpers
+- `paper_downloader/utils/` contains PDF title extraction helpers for no title/metadata Sci-hub papers
 - `paper_downloader/scrappers/arxiv.py` contains arXiv download logic
 - `paper_downloader/scrappers/scihub.py` contains Sci-Hub search and download logic
 - `paper_downloader/main.py` contains the CLI entrypoint
@@ -13,7 +13,7 @@ The code is split by responsibility:
 
 ### Conda environment
 
-From the `paper_downloader/` directory:
+By default when installing with `pip install`, all requirements will be installed. If you want dedicated conda env, use:
 
 ```bash
 conda env create -f environment.yml
