@@ -40,7 +40,8 @@ HEADERS = {
         "Mozilla/5.0 (X11; Linux x86_64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/135.0.0.0 Safari/537.36"
-    )
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
 }
 BLOCKED_RESPONSE_MARKERS = (
     "captcha",
@@ -117,7 +118,12 @@ class SciHub:
             try:
                 response = self.sess.get(
                     SCHOLARS_BASE_URL,
-                    params={"q": query, "start": start},
+                    params={
+                        "hl": "en",
+                        "as_sdt": "0,5",
+                        "q": query,
+                        "start": start,
+                    },
                     timeout=REQUEST_TIMEOUT,
                 )
             except requests.exceptions.RequestException:
@@ -158,7 +164,7 @@ class SciHub:
                     continue
 
                 results["papers"].append(
-                    {"name": title.get_text(strip=True), "url": source}
+                    {"name": title.get_text(" ", strip=True), "url": source}
                 )
                 if len(results["papers"]) >= limit:
                     return results
@@ -292,7 +298,9 @@ class SciHub:
     def _classify(self, identifier: str) -> str:
         """Classify an identifier as a direct URL, article URL, PMID, or DOI."""
         if identifier.startswith("http") or identifier.startswith("https"):
-            return "url-direct" if identifier.endswith("pdf") else "url-non-direct"
+            if self._looks_like_pdf_url(identifier):
+                return "url-direct"
+            return "url-non-direct"
         if identifier.isdigit():
             return "pmid"
         return "doi"
@@ -371,6 +379,10 @@ class SciHub:
     def _is_blocked_response(self, response: requests.Response) -> bool:
         """Return `True` when a response looks like anti-bot or rate-limit protection."""
         if response.status_code in {403, 429, 503, 504}:
+            return True
+
+        parsed_url = urlparse(response.url)
+        if parsed_url.netloc == "www.google.com" and parsed_url.path.startswith("/sorry"):
             return True
 
         response_text = response.text.lower()

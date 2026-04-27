@@ -130,5 +130,4 @@ Each public function returns a dictionary or list of dictionaries with the writt
 
 ## Development notes
 
-- `paper_downloader/downloader.py` and `paper_downloader/scihub.py` are compatibility shims that re-export the new module layout.
 - `paper_downloader/SKILL.md` teaches an agent how to use the CLI correctly.
