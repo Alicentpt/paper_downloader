@@ -15,7 +15,11 @@ from .scrappers.arxiv import (
     download_arxiv_paper_from_url,
     download_arxiv_query,
 )
-from .scrappers.scihub import download_scihub_paper, download_scihub_query
+from .scrappers.scihub import (
+    DEFAULT_DOWNLOAD_DELAY_SECONDS,
+    download_scihub_paper,
+    download_scihub_query,
+)
 
 SORT_BY_CHOICES = {
     "relevance": arxiv.SortCriterion.Relevance,
@@ -108,6 +112,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=10,
         help="maximum number of papers to download",
     )
+    scihub_query_parser.add_argument(
+        "--download-delay",
+        type=int,
+        default=DEFAULT_DOWNLOAD_DELAY_SECONDS,
+        help="seconds to wait between Sci-Hub query download attempts",
+    )
     add_pdf_dir_argument(scihub_query_parser)
     scihub_query_parser.set_defaults(handler=run_scihub_query)
 
@@ -164,7 +174,14 @@ def run_scihub_query(args: argparse.Namespace) -> list[dict[str, str | None]]:
         query=args.query,
         max_results=args.max_results,
         pdf_dir=args.pdf_dir,
+        download_delay=args.download_delay,
+        progress_callback=print_progress,
     )
+
+
+def print_progress(message: str) -> None:
+    """Print batch progress immediately without mixing it into returned records."""
+    print(message, file=sys.stderr, flush=True)
 
 
 def print_records(records: list[dict[str, str | None]]) -> None:

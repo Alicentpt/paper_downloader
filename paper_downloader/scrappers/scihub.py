@@ -7,6 +7,8 @@ import logging
 import os
 import pathlib
 import re
+import time
+from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 from uuid import uuid4
@@ -21,6 +23,7 @@ from ..utils import extract_pdf_title, sanitize_filename
 logging.basicConfig()
 logger = logging.getLogger("Sci-Hub")
 logger.setLevel(logging.DEBUG)
+logging.getLogger("bs4.dammit").setLevel(logging.ERROR)
 
 urllib3.disable_warnings()
 
@@ -34,6 +37,7 @@ DEFAULT_SCIHUB_URLS = [
     "https://sci-hub.do",
 ]
 REQUEST_TIMEOUT = 30
+DEFAULT_DOWNLOAD_DELAY_SECONDS = 10
 DEFAULT_PDF_DIR = Path("./papers/PDFs")
 HEADERS = {
     "User-Agent": (
@@ -162,10 +166,11 @@ class SciHub:
 
                 if not source:
                     continue
+                paper_name = title.get_text(" ", strip=True)
+                if self._is_unsupported_search_result(paper_name, source):
+                    continue
 
-                results["papers"].append(
-                    {"name": title.get_text(" ", strip=True), "url": source}
-                )
+                results["papers"].append({"name": paper_name, "url": source})
                 if len(results["papers"]) >= limit:
                     return results
 
@@ -371,6 +376,11 @@ class SciHub:
         normalized_url = url.lower()
         return ".pdf" in normalized_url or "/pdf/" in normalized_url
 
+    def _is_unsupported_search_result(self, title: str, url: str) -> bool:
+        """Return `True` for Scholar hits that are not paper download candidates."""
+        parsed_url = urlparse(url)
+        return title.startswith("[BOOK]") or parsed_url.netloc == "books.google.com"
+
     def _is_pdf_response(self, response: requests.Response) -> bool:
         """Return `True` when an HTTP response body looks like a PDF."""
         content_type = response.headers.get("Content-Type", "").lower()
@@ -478,6 +488,8 @@ def download_scihub_query(
     query: str,
     max_results: int = 10,
     pdf_dir: str | Path = DEFAULT_PDF_DIR,
+    download_delay: int = DEFAULT_DOWNLOAD_DELAY_SECONDS,
+    progress_callback: Callable[[str], None] | None = None,
 ) -> list[dict[str, str | None]]:
     """Search Google Scholar and download the returned papers through Sci-Hub."""
     ensure_pdf_dir(pdf_dir)
@@ -487,10 +499,42 @@ def download_scihub_query(
     if "err" in results:
         raise RuntimeError(results["err"])
 
+    papers = results["papers"]
+    if progress_callback:
+        progress_callback(f"found {len(papers)} paper(s)")
+        for index, paper in enumerate(papers, start=1):
+            progress_callback(
+                f"found {index}/{len(papers)}: {paper['name']} | {paper['url']}"
+            )
+
     downloads = []
-    for paper in results["papers"]:
-        download_record = download_scihub_paper(url=paper["url"], pdf_dir=pdf_dir)
-        download_record["query_name"] = paper["name"]
+    for index, paper in enumerate(papers, start=1):
+        if index > 1 and download_delay > 0:
+            if progress_callback:
+                progress_callback(f"waiting {download_delay}s before next download")
+            time.sleep(download_delay)
+
+        if progress_callback:
+            progress_callback(f"downloading {index}/{len(papers)}: {paper['name']}")
+
+        try:
+            download_record = download_scihub_paper(url=paper["url"], pdf_dir=pdf_dir)
+            download_record["query_name"] = paper["name"]
+            download_record["status"] = "downloaded"
+            if progress_callback:
+                progress_callback(
+                    f"downloaded {index}/{len(papers)}: {download_record['path']}"
+                )
+        except Exception as error:
+            download_record = {
+                "identifier": paper["url"],
+                "query_name": paper["name"],
+                "status": "error",
+                "error": str(error),
+            }
+            if progress_callback:
+                progress_callback(f"error {index}/{len(papers)}: {error}")
+
         downloads.append(download_record)
 
     return downloads

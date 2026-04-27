@@ -88,6 +88,8 @@ paper-downloader scihub-paper --url "https://www.sciencedirect.com/science/artic
 paper-downloader scihub-query "quantum chemistry" --max-results 3
 ```
 
+`scihub-query` first prints the found Google Scholar results, then downloads them one by one with a 10 second delay between attempts. Use `--download-delay N` to change that pause. Per-paper failures are printed and recorded without stopping the rest of the batch.
+
 `scihub-query` depends on Google Scholar result pages. If Scholar blocks the request, use `scihub-paper` with a DOI or URL instead.
 
 ## Output directories
