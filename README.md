@@ -173,7 +173,7 @@ OpenCode config, replacing `/absolute/path` with your actual checkout location:
 
 | Tool | Purpose | Required arguments |
 | --- | --- | --- |
-| `search_crossref` | Metadata-only bibliographic search; up to 20 results with offset pagination | `query` |
+| `search_crossref` | Journal-article metadata search; up to 20 results with offset pagination | `query` |
 | `download_arxiv_paper` | arXiv PDF plus source archive if available | `paper_id`, `pdf_dir`, `latex_dir` |
 | `download_arxiv_query` | Search arXiv and download up to 20 results; default 5 | `query`, `pdf_dir`, `latex_dir` |
 | `download_paper` | Existing Sci-Hub downloader for a DOI, PMID or article URL | `identifier`, `pdf_dir` |
@@ -183,7 +183,10 @@ Every download requires **absolute output directories**. Use durable directories
 inside the research workspace. The tool returns structured paths and metadata,
 not the PDF content. Crossref returns its original JSON envelope:
 `message.items` holds records, `message.total-results` holds the total count.
-Use `max_results` (1–20) and `offset` (0–1000) for additional pages.
+Use `max_results` (1–20) and `offset` (0–1000) for additional pages. Searches filter
+to Crossref's `journal-article` type to exclude review reports, book entries and
+standalone supplementary records. Matching is relevance-ranked, not an exhaustive
+subject bibliography; inspect each title and DOI.
 
 ### Errors and current limits
 

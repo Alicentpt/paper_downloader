@@ -30,7 +30,7 @@ Overlap: PD-MCP-001 covers transport, not network backend wiring.
 ## PD-MCP-003 — Search without downloading
 
 Given a Crossref response with a known DOI and total count,
-when a bounded bibliographic search is requested,
+when a bounded journal-article bibliographic search is requested,
 then its metadata and pagination information are returned without writing files.
 HTTP failures must propagate as errors.
 

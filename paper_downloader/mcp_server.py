@@ -42,7 +42,7 @@ def create_server() -> FastMCP:
         offset: Annotated[int, Field(ge=0, le=1000)] = 0,
     ) -> dict[str, JsonValue]:
         """
-        Search Crossref metadata without downloading any papers.
+        Search Crossref journal articles without downloading any papers.
 
         Args:
             query: Bibliographic query, title or subject terms.

@@ -44,7 +44,7 @@ Install the optional extra with `pip install -e '.[mcp]'` in a dedicated
 environment, then configure the client to run `paper-downloader-mcp` over stdio.
 See the README for the OpenCode V2 connection command.
 
-- `search_crossref` searches metadata without downloading; paginate with `offset`.
+- `search_crossref` searches journal-article metadata without downloading; paginate with `offset`.
 - `download_arxiv_paper` downloads an identifier; `download_arxiv_query` downloads search results.
 - `download_paper` accepts a DOI, PMID or article URL through the existing Sci-Hub backend.
 - `download_pdf` saves a direct HTTP(S) PDF with a SHA256 filename and 100 MiB limit.

@@ -35,6 +35,10 @@ metadata preservation, error propagation, bounded PDF publication and cleanup.
   error without publishing a PDF. The existing DOI downloader subsequently
   retrieved the requested article. A separate arXiv request encountered HTTP 429.
 
+Live discovery initially returned many Crossref review-report and supplementary
+records. The final search uses `filter=type:journal-article` to make its scope
+explicit and improve the first result page. This does not make the query exhaustive.
+
 # Takeaways
 
 The MCP adapter is ready for client connection. Provider availability is not

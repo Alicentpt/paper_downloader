@@ -12,7 +12,7 @@ def search_crossref(
     query: str, max_results: int = 10, offset: int = 0
 ) -> dict[str, JsonValue]:
     """
-    Search metadata without downloading papers or assuming full-text access.
+    Search journal-article metadata without assuming full-text access.
 
     Args:
         query: Nonempty bibliographic query, including titles or subject terms.
@@ -38,6 +38,7 @@ def search_crossref(
         "https://api.crossref.org/works",
         params={
             "query.bibliographic": query,
+            "filter": "type:journal-article",
             "rows": max_results,
             "offset": offset,
             "select": "DOI,title,author,published,URL",

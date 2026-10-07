@@ -18,6 +18,7 @@ def test_crossref_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
     assert crossref.search_crossref("clinochlore", 3, 6) == payload
     assert get.call_args.kwargs["params"] == {
         "query.bibliographic": "clinochlore",
+        "filter": "type:journal-article",
         "rows": 3,
         "offset": 6,
         "select": "DOI,title,author,published,URL",
