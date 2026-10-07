@@ -58,3 +58,16 @@ Use the MCP SDK or an attached client to search `clinochlore` with `search_cross
 Download a known arXiv record into a durable research directory with
 `download_arxiv_paper`. Confirm PDF magic, page count and the reported source path.
 This checks live provider availability; it is not a deterministic CI acceptance test.
+
+## PD-ARXIV-005 — PDF-only submissions have no source archive
+
+Given an arXiv e-print endpoint that responds with PDF bytes or an HTML page,
+when source retrieval is requested,
+then the downloader returns `None` and writes no mislabeled source archive.
+A gzip response still produces the original source bytes on disk.
+
+Oracle: independent fixed PDF/HTML bytes and a standard-library gzip payload,
+with exact byte comparison for the accepted case.
+Test: `tests/test_arxiv_source.py::test_source_payload_kind`.
+Detects the observed arXiv 2206.09943v1 PDF response being saved as `.tar.gz`.
+Overlap: MCP wiring tests mock this backend and do not check source response kinds.

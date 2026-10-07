@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import arxiv
 import requests
 
-from ..utils import sanitize_filename
+from paper_downloader.utils import sanitize_filename
 
 ARXIV_HEADERS = {"User-Agent": "Mozilla/5.0 paper_downloader/0.1"}
 ARXIV_TIMEOUT = 60
@@ -20,7 +20,16 @@ def ensure_output_dirs(
     pdf_dir: str | Path = DEFAULT_PDF_DIR,
     latex_dir: str | Path = DEFAULT_LATEX_DIR,
 ) -> tuple[Path, Path]:
-    """Create the output directories used by arXiv downloads and return them."""
+    """
+    Create the output directories used by arXiv downloads.
+
+    Args:
+        pdf_dir: PDF destination, created recursively when missing.
+        latex_dir: Source destination, created recursively when missing.
+
+    Returns:
+        PDF and source directory paths, in that order.
+    """
     pdf_path = Path(pdf_dir)
     latex_path = Path(latex_dir)
     pdf_path.mkdir(parents=True, exist_ok=True)
@@ -29,7 +38,15 @@ def ensure_output_dirs(
 
 
 def build_arxiv_file_stem(result: arxiv.Result) -> str:
-    """Build a stable file stem from an arXiv result identifier and title."""
+    """
+    Build a stable file stem from an arXiv result.
+
+    Args:
+        result: Metadata with the paper identifier and title.
+
+    Returns:
+        Sanitized identifier/title filename stem.
+    """
     short_id = result.get_short_id().replace("/", "_")
     title = sanitize_filename(result.title, fallback=short_id).replace(" ", "_")
     if title == short_id:
@@ -38,7 +55,21 @@ def build_arxiv_file_stem(result: arxiv.Result) -> str:
 
 
 def download_result_pdf(result: arxiv.Result, pdf_dir: Path) -> Path:
-    """Download a single arXiv PDF into the target PDF directory."""
+    """
+    Download a single arXiv PDF into the target directory.
+
+    Args:
+        result: Metadata with a PDF URL and filename information.
+        pdf_dir: Existing PDF destination directory.
+
+    Returns:
+        Written PDF path. HTTP and filesystem failures propagate.
+
+    Raises:
+        ValueError: The metadata does not contain a PDF URL.
+    """
+    if result.pdf_url is None:
+        raise ValueError("arXiv metadata does not contain a PDF URL")
     response = requests.get(
         result.pdf_url,
         headers=ARXIV_HEADERS,
@@ -52,7 +83,17 @@ def download_result_pdf(result: arxiv.Result, pdf_dir: Path) -> Path:
 
 
 def download_result_source(result: arxiv.Result, latex_dir: Path) -> Path | None:
-    """Download the source archive for a single arXiv result when available."""
+    """
+    Download source bytes, excluding PDF-only submissions and HTML responses.
+
+    Args:
+        result: arXiv metadata identifying the submission.
+        latex_dir: Existing directory for the source download.
+
+    Returns:
+        Saved source path, or None when unavailable or when the endpoint returns
+        a PDF/HTML response instead of source. Filesystem errors propagate.
+    """
     source_url = f"https://arxiv.org/e-print/{result.get_short_id()}"
 
     try:
@@ -66,6 +107,14 @@ def download_result_source(result: arxiv.Result, latex_dir: Path) -> Path | None
     except requests.RequestException:
         return None
 
+    # PDF-only submissions return the original PDF from /e-print. It is not a
+    # LaTeX archive and must not be published with a misleading .tar.gz suffix.
+    if (
+        response.content.startswith(b"%PDF-")
+        or "text/html" in response.headers.get("Content-Type", "").lower()
+    ):
+        return None
+
     source_path = latex_dir / f"{build_arxiv_file_stem(result)}.tar.gz"
     source_path.write_bytes(response.content)
     return source_path
@@ -76,7 +125,17 @@ def build_download_record(
     pdf_path: Path,
     source_path: Path | None,
 ) -> dict[str, str | None]:
-    """Build a CLI- and API-friendly record for one arXiv download."""
+    """
+    Build a CLI- and API-friendly download record.
+
+    Args:
+        result: Paper metadata.
+        pdf_path: Saved PDF location.
+        source_path: Saved source location, or None if unavailable.
+
+    Returns:
+        Identifier, title, PDF path and nullable source path.
+    """
     return {
         "paper_id": result.get_short_id(),
         "title": result.title,
@@ -86,7 +145,18 @@ def build_download_record(
 
 
 def extract_arxiv_id_from_url(url: str) -> str:
-    """Extract the arXiv identifier from an `/abs/...` or `/pdf/...` URL."""
+    """
+    Extract an identifier from an arXiv-style URL path.
+
+    Args:
+        url: URL with an `/abs/...` or `/pdf/...` path.
+
+    Returns:
+        Identifier including its version suffix, if present.
+
+    Raises:
+        ValueError: The path does not contain a supported identifier.
+    """
     parsed = urlparse(url)
     path = parsed.path.strip("/")
 
@@ -95,8 +165,7 @@ def extract_arxiv_id_from_url(url: str) -> str:
             continue
 
         paper_id = path[len(prefix) :]
-        if paper_id.endswith(".pdf"):
-            paper_id = paper_id[:-4]
+        paper_id = paper_id.removesuffix(".pdf")
         if paper_id:
             return paper_id
 
@@ -110,7 +179,19 @@ def download_arxiv_query(
     pdf_dir: str | Path = DEFAULT_PDF_DIR,
     latex_dir: str | Path = DEFAULT_LATEX_DIR,
 ) -> list[dict[str, str | None]]:
-    """Download PDFs and source archives for an arXiv search query."""
+    """
+    Download PDFs and available sources for an arXiv query.
+
+    Args:
+        query: Plain-language or field-qualified arXiv query.
+        max_results: Maximum number of papers to download.
+        sort_by: arXiv ranking criterion.
+        pdf_dir: PDF output directory, created if missing.
+        latex_dir: Source output directory, created if missing.
+
+    Returns:
+        Records in search order. Errors propagate; earlier files remain on disk.
+    """
     pdf_path, latex_path = ensure_output_dirs(pdf_dir=pdf_dir, latex_dir=latex_dir)
     search = arxiv.Search(query=query, max_results=max_results, sort_by=sort_by)
     client = arxiv.Client()
@@ -119,7 +200,9 @@ def download_arxiv_query(
     for result in client.results(search):
         downloaded_pdf = download_result_pdf(result, pdf_path)
         downloaded_source = download_result_source(result, latex_path)
-        downloads.append(build_download_record(result, downloaded_pdf, downloaded_source))
+        downloads.append(
+            build_download_record(result, downloaded_pdf, downloaded_source)
+        )
 
     return downloads
 
@@ -129,7 +212,19 @@ def download_arxiv_paper(
     pdf_dir: str | Path = DEFAULT_PDF_DIR,
     latex_dir: str | Path = DEFAULT_LATEX_DIR,
 ) -> dict[str, str | None]:
-    """Download a single arXiv paper by identifier."""
+    """
+    Download a single arXiv paper by identifier.
+
+    Args:
+        paper_id: arXiv identifier, optionally with a version suffix.
+        pdf_dir: PDF output directory, created if missing.
+        latex_dir: Source output directory, created if missing.
+
+    Returns:
+        Download metadata and paths; source_path is None when unavailable.
+
+    Lookup, HTTP and filesystem errors propagate to the caller.
+    """
     pdf_path, latex_path = ensure_output_dirs(pdf_dir=pdf_dir, latex_dir=latex_dir)
     result = next(arxiv.Client().results(arxiv.Search(id_list=[paper_id])))
     downloaded_pdf = download_result_pdf(result, pdf_path)
@@ -142,7 +237,19 @@ def download_arxiv_paper_from_url(
     pdf_dir: str | Path = DEFAULT_PDF_DIR,
     latex_dir: str | Path = DEFAULT_LATEX_DIR,
 ) -> dict[str, str | None]:
-    """Download a single arXiv paper from an arXiv URL."""
+    """
+    Download a single arXiv paper from an arXiv URL.
+
+    Args:
+        url: URL with an arXiv `/abs/...` or `/pdf/...` path.
+        pdf_dir: PDF output directory, created if missing.
+        latex_dir: Source output directory, created if missing.
+
+    Returns:
+        Download metadata and paths; source_path is None when unavailable.
+
+    URL validation and download failures propagate to the caller.
+    """
     return download_arxiv_paper(
         extract_arxiv_id_from_url(url),
         pdf_dir=pdf_dir,

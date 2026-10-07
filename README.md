@@ -201,6 +201,8 @@ content-addressed filenames. They do not parse the entire PDF for validity.
 The existing arXiv/Sci-Hub APIs retain their own filename, overwrite and validation
 behavior. An arXiv batch can leave already completed files after an error; it is
 not transactional. An unavailable arXiv source is represented by `source_path: null`.
+PDF-only submissions and HTML responses from arXiv's e-print endpoint are also
+reported as unavailable sources rather than saved as misleading `.tar.gz` files.
 
 Search metadata is not evidence that a paper's full text was read. Crossref does
 not enumerate every repository or resolve open-access PDF URLs. Google Scholar
@@ -211,14 +213,14 @@ batch search remains available through the CLI and may encounter blocking pages.
 Install `.[mcp,dev]`, then run:
 
 ```bash
-python -m ruff check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients tests
-python -m ruff format --check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients tests
+python -m ruff check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients paper_downloader/scrappers/arxiv.py tests
+python -m ruff format --check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients paper_downloader/scrappers/arxiv.py tests
 python -m pyright
 python -m pytest tests -q
 ```
 
-These gates cover the new MCP/HTTP modules and their acceptance tests. Existing
-CLI/scraper files are imported and exercised at the adapter boundary but have not
+These gates cover the MCP/HTTP modules, the changed arXiv backend and their
+acceptance tests. The remaining CLI/scraper files are imported and exercised at the adapter boundary but have not
 received a repository-wide style migration. GitHub Actions runs these checks on
 every push and pull request under Python 3.11 and 3.13, plus a CLI startup check.
 

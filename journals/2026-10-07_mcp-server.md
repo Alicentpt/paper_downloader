@@ -22,7 +22,7 @@ metadata preservation, error propagation, bounded PDF publication and cleanup.
 
 # Results
 
-- Python 3.13 local validation: **10 tests passed**, with one existing PyPDF2
+- Python 3.13 final local validation: **13 tests passed**, with one existing PyPDF2
   deprecation warning. Python 3.11 and 3.13 are configured in the new GitHub CI.
 - Ruff 0.15.4 check and format check passed for all new Python modules and tests.
   The global autofix script was used with the portable baseline overlay.
@@ -38,6 +38,12 @@ metadata preservation, error propagation, bounded PDF publication and cleanup.
 Live discovery initially returned many Crossref review-report and supplementary
 records. The final search uses `filter=type:journal-article` to make its scope
 explicit and improve the first result page. This does not make the query exhaustive.
+
+Artifact inspection also found that the original arXiv e-print helper saved a
+PDF-only submission as `.tar.gz`. PD-ARXIV-005 was written before the repair:
+PDF and HTML source responses now return `None` without publishing an archive.
+The changed arXiv module was added to the same Ruff/Pyright/CI scope, its public
+docstrings completed, and missing PDF-URL metadata now raises a clear ValueError.
 
 # Takeaways
 

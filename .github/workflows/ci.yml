@@ -15,9 +15,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install '.[mcp,dev]'
       - name: Lint MCP and its acceptance tests
-        run: ruff check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients tests
+        run: ruff check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients paper_downloader/scrappers/arxiv.py tests
       - name: Check formatting
-        run: ruff format --check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients tests
+        run: ruff format --check paper_downloader/mcp_server.py paper_downloader/mcp_downloads.py paper_downloader/clients paper_downloader/scrappers/arxiv.py tests
       - run: pyright
       - run: python -m pytest tests -q
       - run: paper-downloader --help
