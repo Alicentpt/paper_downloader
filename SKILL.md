@@ -38,6 +38,21 @@ pip install -e .
 - arXiv source archives default to `./papers/LaTeX`
 - Override them with `--pdf-dir` and `--latex-dir`
 
+## MCP Interface
+
+Install the optional extra with `pip install -e '.[mcp]'` in a dedicated
+environment, then configure the client to run `paper-downloader-mcp` over stdio.
+See the README for the OpenCode V2 connection command.
+
+- `search_crossref` searches metadata without downloading; paginate with `offset`.
+- `download_arxiv_paper` downloads an identifier; `download_arxiv_query` downloads search results.
+- `download_paper` accepts a DOI, PMID or article URL through the existing Sci-Hub backend.
+- `download_pdf` saves a direct HTTP(S) PDF with a SHA256 filename and 100 MiB limit.
+
+Supply absolute, durable `pdf_dir` and, for arXiv, `latex_dir` paths. Inspect tool
+errors before reporting success. Download records are paths and metadata, not
+full-text contents; open the saved paper before attributing detailed methods to it.
+
 ## Workflow Notes
 
 - Prefer the CLI for user-facing tasks and the Python API for embedding in scripts.

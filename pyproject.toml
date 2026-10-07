@@ -20,6 +20,19 @@ dependencies = [
 
 [project.scripts]
 paper-downloader = "paper_downloader.main:main"
+paper-downloader-mcp = "paper_downloader.mcp_server:main"
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.12,<2"]
+dev = ["pytest==9.0.2", "ruff==0.15.4", "pyright==1.1.408"]
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+include = ["paper_downloader/mcp_server.py", "paper_downloader/mcp_downloads.py", "paper_downloader/clients", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["."]

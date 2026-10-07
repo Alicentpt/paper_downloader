@@ -1,0 +1,58 @@
+# /home/seregin/.config/ruff/ruff.toml
+line-length = 88
+target-version = "py313"
+extend-include = ["*.ipynb"]
+extend-exclude = ["*.json"]
+preview = true
+[lint]
+select = [
+  "E",    # pycodestyle errors
+  "W",    # pycodestyle warnings
+  "F",    # pyflakes
+  "I",    # isort (import sorting)
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "SIM",  # flake8-simplify
+  "C4",   # flake8-comprehensions
+  "PIE",  # flake8-pie
+  "PL",   # pylint-compatible rules
+  "RUF",  # ruff-specific rules
+  "ERA",  # eradicate
+  "EXE",  # flake8-executable
+  "FIX",  # flake8-fixme
+  "INT",  # flake8-gettext
+  "PT",   # flake8-pytest-style
+  "SLF",  # flake8-self
+  "TD",   # flake8-todos
+  "NPY",  # NumPy-specific rules
+  "PD",   # pandas-vet
+  "N",    # pep8-naming
+  "PERF", # Perflint
+  "DOC",  # pydoclint
+  "D",    # pydocstyle
+  "PGH",  # pygrep-hooks
+  "FURB", # refurb
+  "TRY",  # tryceratops
+]
+ignore = [
+"D107", # undocumented-public-init
+"D212", # Checks for docstring summary lines that are not positioned on the first physical line of the docstring.
+"D203", # Checks for docstrings on class definitions that are not preceded by a blank line.
+"E501", # line-too-long - since it formats code, ignore it for docstrings
+"TRY003", # Checks for long exception messages that are not defined in the exception class itself.
+"PLR0913", # Checks for function definitions that include too many arguments.
+"RUF003", # ambiguous-unicode-character-comment - for russian letters in code
+"RUF002", # ambiguous-unicode-character-docstring - for russian letters in code
+"RUF001", # ambiguous-unicode-character-string - for russian letters in code
+"UP015", # Checks for redundant open mode arguments (e.g. open(..., "r") -> open(...))
+"N806", # Checks for the use of non-lowercase variable names in functions.
+"N803", # Checks for argument names that do not follow the snake_case convention.
+"E741", # Checks for the use of the characters 'l', 'O', or 'I' as variable names.
+"B905" # Checks for zip calls without an explicit strict parameter when called with two or more iterables, or any starred argument.
+]
+
+[lint.pydocstyle]
+convention = "google"
+
+[format]
+quote-style = "double"
